@@ -1279,3 +1279,32 @@ test('can specify removal policy', () => {
     DeletionPolicy: 'Retain',
   });
 });
+
+test('can specify dependencies', () => {
+  // GIVEN
+  const stack = new cdk.Stack();
+  const role = new iam.Role(stack, 'Role', {
+    assumedBy: new iam.ServicePrincipal('ec2.amazonaws.com'),
+  });
+  const managedPolicy = new iam.ManagedPolicy(stack, 'ManagedPolicy', {
+    roles: [role],
+    statements: [new iam.PolicyStatement({ actions: ['service:action'], resources: ['*'] })],
+  });
+
+  // WHEN
+  const customResource = new AwsCustomResource(stack, 'AwsSdk', {
+    onCreate: {
+      service: 'service',
+      action: 'action',
+      physicalResourceId: PhysicalResourceId.of('id'),
+    },
+    role: role,
+  });
+
+  customResource.node.addDependency(managedPolicy);
+
+  // THEN
+  Template.fromStack(stack).hasResource('Custom::AWS', {
+    DependsOn: ['ManagedPolicy7BAB786E'],
+  });
+});

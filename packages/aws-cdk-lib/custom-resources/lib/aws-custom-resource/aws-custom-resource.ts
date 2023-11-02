@@ -487,6 +487,7 @@ export class AwsCustomResource extends Construct implements iam.IGrantable {
         installLatestAwsSdk,
       },
     });
+    this.customResource.node.addDependency(this);
 
     // Create the policy statements for the custom resource function role, or use the user-provided ones
     if (props.policy) {
